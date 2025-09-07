@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aztec HONK vs PLONK Arena</title>
+    <style>
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px #0f4c75;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            color: #a8a8a8;
+            margin-bottom: 30px;
+        }
+        
+        .game-area {
+            background: rgba(15, 60, 117, 0.3);
+            border: 2px solid #0f4c75;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+        
+        .player-input {
+            margin: 20px 0;
+        }
+        
+        input {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid #0f4c75;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            margin: 0 10px;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        
+        .honk-btn {
+            background: linear-gradient(45deg, #e94560, #ff6b8a);
+            color: white;
+        }
+        
+        .plonk-btn {
+            background: linear-gradient(45deg, #0f4c75, #3282b8);
+            color: white;
+        }
+        
+        .join-btn {
+            background: linear-gradient(45deg, #2d5a8b, #4a90e2);
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .status {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        
+        .game-controls {
+            display: none;
+        }
+        
+        .game-controls.active {
+            display: block;
+        }
+        
+        #gameCanvas {
+            border: 2px solid #0f4c75;
+            border-radius: 10px;
+            background: linear-gradient(45deg, #0f1419, #1a2332);
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ AZTEC HONK vs PLONK ARENA ⚡</h1>
+        <p class="subtitle">Blockchain Battle Arena - Attestation Wars</p>
+        
+        <div class="game-area">
+            <div id="login-section">
+                <h2>Join the Arena</h2>
+                <div class="player-input">
+                    <input type="text" id="playerName" placeholder="Enter your warrior name" maxlength="20">
+                    <input type="text" id="walletAddress" placeholder="Wallet address (optional)" maxlength="42">
+                </div>
+                <button class="join-btn" onclick="joinArena()">Enter Arena</button>
+            </div>
+            
+            <div id="game-section" class="game-controls">
+                <canvas id="gameCanvas" width="800" height="400"></canvas>
+                <div>
+                    <button class="honk-btn" onclick="performHonk()">🔥 HONK ATTACK</button>
+                    <button class="plonk-btn" onclick="performPlonk()">🛡️ PLONK SHIELD</button>
+                </div>
+            </div>
+            
+            <div id="status" class="status">Ready to connect to arena...</div>
+        </div>
+    </div>
+
+    <script>
+        // Game configuration
+        const CONFIG = {
+            API_URL: 'http://localhost:3000' // We'll change this for production
+        };
+        
+        let gameState = {
+            player: null,
+            connected: false
+        };
+        
+        // Test backend connection
+        async function testConnection() {
+            try {
+                const response = await fetch(`${CONFIG.API_URL}/api/health`);
+                const data = await response.json();
+                updateStatus(`Connected: ${data.status}`);
+                gameState.connected = true;
+                return true;
+            } catch (error) {
+                updateStatus(`Connection failed: ${error.message}`);
+                gameState.connected = false;
+                return false;
+            }
+        }
+        
+        // Join the arena
+        async function joinArena() {
+            const name = document.getElementById('playerName').value.trim();
+            const wallet = document.getElementById('walletAddress').value.trim();
+            
+            if (!name) {
+                alert('Please enter your warrior name!');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${CONFIG.API_URL}/api/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, wallet })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    gameState.player = data.player;
+                    updateStatus(`Welcome, ${name}! You've entered the arena.`);
+                    showGameControls();
+                    initGame();
+                } else {
+                    updateStatus(`Failed to join: ${data.error}`);
+                }
+            } catch (error) {
+                updateStatus(`Join failed: ${error.message}`);
+            }
+        }
+        
+        function showGameControls() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('game-section').classList.add('active');
+        }
+        
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+        
+        // Game actions
+        function performHonk() {
+            updateStatus('🔥 HONK ATTACK launched! Searching for targets...');
+            // Add game logic here
+        }
+        
+        function performPlonk() {
+            updateStatus('🛡️ PLONK SHIELD activated! Defending position...');
+            // Add game logic here
+        }
+        
+        // Initialize game canvas
+        function initGame() {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Simple game rendering
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw background grid
+                ctx.strokeStyle = 'rgba(79, 172, 254, 0.2)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < canvas.width; x += 40) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < canvas.height; y += 40) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                
+                // Draw player indicator
+                ctx.fillStyle = '#4facfe';
+                ctx.font = '20px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Warrior: ${gameState.player.name}`, canvas.width/2, 50);
+                
+                ctx.fillStyle = '#f093fb';
+                ctx.font = '16px Courier New';
+                ctx.fillText('Ready for battle!', canvas.width/2, canvas.height/2);
+            }
+            
+            draw();
+        }
+        
+        // Test connection on page load
+        window.addEventListener('load', () => {
+            testConnection();
+        });
+    </script>
+</body>
+</html>
